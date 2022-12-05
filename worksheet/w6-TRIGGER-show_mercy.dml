@@ -1,0 +1,14 @@
+CREATE OR REPLACE FUNCTION show_mercy()
+    RETURNS TRIGGER AS $show_mercy_trigger$
+    BEGIN
+       IF (NEW.Imprisonment = true) AND (NEW.PeopleKilled = 0) AND (NEW.vid IN (SELECT cid FROM ExtraordinaryCitizen WHERE age > 100))
+          THEN NEW.Imprisonment := false;
+       END IF;
+       RETURN NEW;
+    END;
+$show_mercy_trigger$ LANGUAGE PLPGSQL;
+
+
+CREATE TRIGGER show_mercy_trigger BEFORE INSERT ON villain
+FOR EACH ROW EXECUTE PROCEDURE show_mercy();
+

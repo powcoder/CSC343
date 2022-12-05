@@ -1,0 +1,44 @@
+-- 1
+SELECT COUNT(Name) AS "Strange Nicknames" FROM Alias WHERE cid = 4;
+
+-- 2
+SELECT AVG(Weight) FROM 
+    (SELECT * FROM ExtraordinaryCitizen WHERE EXISTS 
+        (SELECT * FROM Superhero WHERE Superheroes.sid = ExtraordinaryCitizen.cid)) Supers
+    WHERE Age  > 50;
+
+SELECT AVG(t.weight) FROM ( SELECT * FROM extraordinarycitizen WHERE EXISTS ( SELECT * FROM Superhero WHERE superhero.sid=extraordinarycitizen.cid))t WHERE t.age > 50;
+
+-- 3
+SELECT vid FROM Villain WHERE PeopleKilled = (SELECT MAX(PeopleKilled) FROM Villain);
+
+-- 4
+SELECT DISTINCT cid, count(Name) FROM Alias GROUP BY cid HAVING COUNT(Name) >= 2;
+
+-- 5 
+SELECT name, intelligence, energyprojection, durability, strength, speed, fightingskills FROM extraordinarycitizen, powergrid WHERE extraordinarycitizen.cid=powergrid.cid;
+
+-- TRIGGER
+-- Show this insert first! age is 500yo
+INSERT INTO extraordinarycitizen VALUES(99, 'Ultron', 250, 'Stark Labs', 500);
+INSERT INTO villain VALUES(99, 0, true);
+
+-- Run this script! Aka -- w6-TRIGGER-show_mercy.dml
+CREATE OR REPLACE FUNCTION show_mercy()
+    RETURNS TRIGGER AS $show_mercy_trigger$
+    BEGIN
+       IF (NEW.Imprisonment = true) AND (NEW.PeopleKilled = 0) AND (NEW.vid IN (SELECT cid FROM ExtraordinaryCitizen WHERE age > 100))
+          THEN NEW.Imprisonment := false;
+       END IF;
+       RETURN NEW;
+    END;
+$show_mercy_trigger$ LANGUAGE PLPGSQL;
+
+
+CREATE TRIGGER show_mercy_trigger BEFORE INSERT ON villain
+FOR EACH ROW EXECUTE PROCEDURE show_mercy();
+
+-- Some inserts for testing!
+INSERT INTO extraordinarycitizen VALUES(98, 'Whiplash', 350, 'Delaware, USA', 125);
+INSERT INTO villain VALUES(98, 0, true);
+
